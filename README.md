@@ -1,11 +1,17 @@
 # PromptLab
 
-PromptLab is an internal tool designed for AI engineers to effectively store, organize, and manage their AI prompts. Think of it as a "Postman for Prompts" — providing a professional workspace that allows teams to:
-- 📝 Store prompt templates with variables (`{{input}}`, `{{context}}`)
-- 📁 Organize prompts into collections
-- 🏷️ Tag and search prompts
-- 📜 Track version history
-- 🧪 Test prompts with sample inputs
+PromptLab is a tool for storing, organizing, and testing AI prompts in collections.
+
+## Table of Contents
+- [Project Overview](#project-overview)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Installation Guide](#installation-guide)
+- [API Summary](#api-summary)
+- [Usage Examples](#usage-examples)
+- [Testing](#testing)
+- [Contribution](#contribution)
+- [License](#license)
 
 ## Project Overview
 
