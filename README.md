@@ -46,7 +46,7 @@ PromptLab/
 
 2. **Navigate to the project directory:**
    ```shell
-   cd PromptLab
+   cd backend
    ```
 
 3. **Create a virtual environment:**
@@ -94,7 +94,8 @@ PromptLab features a RESTful API, powered by FastAPI, offering the following end
 To start the FastAPI application, run the following command:
 
 ```shell
-uvicorn backend.app.api:app --reload
+cd backend
+uvicorn main:app --reload
 ```
 
 The application will be available at `http://127.0.0.1:8000`.
@@ -117,7 +118,8 @@ POST /prompts
 Run the test suite with pytest:
 
 ```shell
-pytest
+cd backend
+pytest tests/ -v
 ```
 
 ## Contribution
