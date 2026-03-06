@@ -1,167 +1,123 @@
 # PromptLab
 
-**Your AI Prompt Engineering Platform**
-
----
-
-## Welcome to the Team! 👋
-
-Congratulations on joining the PromptLab engineering team! You've been brought on to help us build the next generation of prompt engineering tools.
-
-### What is PromptLab?
-
-PromptLab is an internal tool for AI engineers to **store, organize, and manage their prompts**. Think of it as a "Postman for Prompts" — a professional workspace where teams can:
-
+PromptLab is an internal tool designed for AI engineers to effectively store, organize, and manage their AI prompts. Think of it as a "Postman for Prompts" — providing a professional workspace that allows teams to:
 - 📝 Store prompt templates with variables (`{{input}}`, `{{context}}`)
 - 📁 Organize prompts into collections
 - 🏷️ Tag and search prompts
 - 📜 Track version history
 - 🧪 Test prompts with sample inputs
 
-### The Current Situation
+## Project Overview
 
-The previous developer left us with a *partially working* backend. The core structure is there, but:
+PromptLab is developed with the aim to streamline the process of managing AI prompts. It supports creating, organizing, and testing prompts, making it easier for AI engineers to collaborate and iterate on prompt designs efficiently.
 
-- There are **several bugs** that need fixing
-- Some **features are incomplete**
-- The **documentation is minimal** (you'll fix that)
-- There are **no tests** worth mentioning
-- **No CI/CD pipeline** exists
-- **No frontend** has been built yet
-
-Your job over the next 4 weeks is to transform this into a **production-ready, full-stack application**.
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Python 3.10+
-- Node.js 18+ (for Week 4)
-- Git
-
-### Run Locally
-
-```bash
-# Clone the repo
-git clone <your-repo-url>
-cd promptlab
-
-# Set up backend
-cd backend
-pip install -r requirements.txt
-python main.py
-```
-
-API runs at: http://localhost:8000
-
-API docs at: http://localhost:8000/docs
-
-### Run Tests
-
-```bash
-cd backend
-pytest tests/ -v
-```
-
----
-
-## Project Structure
+## Architecture
 
 ```
-promptlab/
-├── README.md                    # You are here
-├── PROJECT_BRIEF.md             # Your assignment details
-├── GRADING_RUBRIC.md            # How you'll be graded
-│
+PromptLab/
 ├── backend/
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── api.py              # FastAPI routes (has bugs!)
-│   │   ├── models.py           # Pydantic models
-│   │   ├── storage.py          # In-memory storage
-│   │   └── utils.py            # Helper functions
-│   ├── tests/
-│   │   ├── __init__.py
-│   │   ├── test_api.py         # Basic tests
-│   │   └── conftest.py         # Test fixtures
-│   ├── main.py                 # Entry point
-│   └── requirements.txt
-│
-├── frontend/                    # You'll create this in Week 4
-├── specs/                       # You'll create this in Week 2
-├── docs/                        # You'll create this in Week 2
-└── .github/                     # You'll set up CI/CD in Week 3
+│   │   ├── api.py        # FastAPI routes
+│   │   ├── models.py     # Pydantic models/schemas
+│   │   ├── storage.py    # In-memory storage (future DB placeholder)
+│   │   ├── utils.py      # Shared helpers and utilities
+└── tests/
+    ├── test_api_prompts.py  # Tests for prompt API operations
 ```
 
----
+## Prerequisites
 
-## Your Mission
+- Python 3.11+
+- pip (Python package installer)
+- Git 2.40+
 
-### 🧪 Experimentation Encouraged!
-While we provide guidelines, **you are the engineer**. If you see a better way to solve a problem using AI, do it!
-- Want to swap the storage layer for a real database? **Go for it.**
-- Want to add Authentication? **Do it.**
-- Want to rewrite the API in a different style? **As long as tests pass, you're clear.**
+## Installation Guide
 
-The goal is to learn how to build *better* software *faster* with AI. Don't be afraid to break things and rebuild them better.
+1. **Clone the repository:**
+   ```shell
+   git clone <repository-url>
+   ```
 
-### Week 1: Fix the Backend
-- Understand this codebase using AI
-- Find and fix the bugs
-- Implement missing features
+2. **Navigate to the project directory:**
+   ```shell
+   cd PromptLab
+   ```
 
-### Week 2: Document Everything
-- Write proper documentation
-- Create feature specifications
-- Set up coding standards
+3. **Create a virtual environment:**
+   ```shell
+   python -m venv venv
+   ```
 
-### Week 3: Make it Production-Ready
-- Write comprehensive tests
-- Implement new features with TDD
-- Set up CI/CD and Docker
+4. **Activate the virtual environment:**
+   - On Windows:
+     ```shell
+     venv\Scripts\activate
+     ```
+   - On macOS/Linux:
+     ```shell
+     source venv/bin/activate
+     ```
 
-### Week 4: Build the Frontend
-- Create a React frontend
-- Connect it to the backend
-- Polish the user experience
+5. **Install the dependencies:**
+   ```shell
+   pip install -r requirements.txt
+   ```
 
----
+## API Summary
 
-## API Endpoints (Current)
+PromptLab features a RESTful API, powered by FastAPI, offering the following endpoints:
 
-| Method | Endpoint | Description | Status |
-|--------|----------|-------------|--------|
-| GET | `/health` | Health check | ✅ Works |
-| GET | `/prompts` | List all prompts | ⚠️ Has issues |
-| GET | `/prompts/{id}` | Get single prompt | ❌ Bug |
-| POST | `/prompts` | Create prompt | ✅ Works |
-| PUT | `/prompts/{id}` | Update prompt | ⚠️ Has issues |
-| DELETE | `/prompts/{id}` | Delete prompt | ✅ Works |
-| GET | `/collections` | List collections | ✅ Works |
-| GET | `/collections/{id}` | Get collection | ✅ Works |
-| POST | `/collections` | Create collection | ✅ Works |
-| DELETE | `/collections/{id}` | Delete collection | ❌ Bug |
+- **Prompts:**
+  - `GET /prompts`: List all prompts
+  - `POST /prompts`: Create a new prompt
+  - `GET /prompts/{prompt_id}`: Retrieve a specific prompt
+  - `PUT /prompts/{prompt_id}`: Update a specific prompt
+  - `DELETE /prompts/{prompt_id}`: Delete a specific prompt
 
----
+- **Collections:**
+  - `GET /collections`: List all collections
+  - `POST /collections`: Create a new collection
+  - `GET /collections/{collection_id}`: Retrieve a specific collection
+  - `PUT /collections/{collection_id}`: Update a specific collection
+  - `DELETE /collections/{collection_id}`: Delete a specific collection
 
-## Tech Stack
+## Usage Examples
 
-- **Backend**: Python 3.10+, FastAPI, Pydantic
-- **Frontend**: React, Vite (Week 4)
-- **Testing**: pytest
-- **DevOps**: Docker, GitHub Actions (Week 3)
+### Starting the Application
 
----
+To start the FastAPI application, run the following command:
 
-## Need Help?
+```shell
+uvicorn backend.app.api:app --reload
+```
 
-1. **Use AI tools** — This is an AI-assisted coding course!
-2. Read the `PROJECT_BRIEF.md` for detailed instructions
-3. Check `GRADING_RUBRIC.md` to understand expectations
-4. Ask questions in the course forum
+The application will be available at `http://127.0.0.1:8000`.
 
----
+### Sample Request
 
-Good luck, and welcome to the team! 🚀
+To create a new prompt:
+
+```json
+POST /prompts
+{
+  "name": "SamplePrompt",
+  "content": "This is a sample prompt with variable {{input}}",
+  "collection_id": "col-123"
+}
+```
+
+### Testing
+
+Run the test suite with pytest:
+
+```shell
+pytest
+```
+
+## Contribution
+
+If you're interested in contributing to PromptLab, please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the MIT License.
