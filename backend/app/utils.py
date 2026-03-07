@@ -1,14 +1,12 @@
 """Utility functions for PromptLab"""
-
 from typing import List
-# To avoid circular dependency
+import re
+
+# !NOTE: Prompt is done to avoid circular dependency
 # models -> utils
 # utils -> models
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from app.models import Prompt
-    
-import re
+class Prompt:
+    ...
 
 def sort_prompts_by_date(prompts: List[Prompt], descending: bool = True) -> List[Prompt]:
     """Sort prompts by their creation date.
