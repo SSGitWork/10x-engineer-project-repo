@@ -1,7 +1,14 @@
 """Utility functions for PromptLab"""
 
 from typing import List
-from app.models import Prompt
+# To avoid circular dependency
+# models -> utils
+# utils -> models
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models import Prompt
+    
+import re
 
 def sort_prompts_by_date(prompts: List[Prompt], descending: bool = True) -> List[Prompt]:
     """Sort prompts by their creation date.
@@ -64,6 +71,41 @@ def search_prompts(prompts: List[Prompt], query: str) -> List[Prompt]:
         if query_lower in p.title.lower() or
            (p.description and query_lower in p.description.lower())
     ]
+
+def normalize_tags(tags: List[str]) -> List[str]:
+    """Normalize and validate tags.
+
+    - trims whitespace
+    - converts to lowercase
+    - removes duplicates
+    - validates length and characters
+    """
+    if tags is None:
+        return []
+
+    cleaned = []
+    seen = set()
+
+    for tag in tags:
+        tag = tag.strip().lower()
+
+        if len(tag) > 50:
+            raise ValueError("Tag length exceeds 50 characters")
+
+        if not re.match(r"^[a-z0-9 ]+$", tag):
+            raise ValueError("Tags must be alphanumeric and may contain spaces")
+
+        if tag not in seen:
+            cleaned.append(tag)
+            seen.add(tag)
+
+    return cleaned
+
+
+def parse_tags_query(tags: str) -> List[str]:
+    """Parse comma-separated tag query parameter."""
+    return normalize_tags([t.strip() for t in tags.split(",") if t.strip()])
+
 
 def filter_prompts_by_tags(prompts: List[Prompt], tags: List[str]) -> List[Prompt]:
     """Filter prompts that match ANY of the provided tags.

@@ -3,8 +3,8 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator
-import re
 from uuid import uuid4
+from app.utils import normalize_tags
 
 def generate_id() -> str:
     """Generate a unique identifier using UUID4.
@@ -56,27 +56,8 @@ class PromptBase(BaseModel):
 
     @field_validator("tags", mode="before")
     @classmethod
-    def normalize_tags(cls, tags):
-        if tags is None:
-            return []
-
-        cleaned = []
-        seen = set()
-
-        for tag in tags:
-            tag = tag.strip().lower()
-
-            if len(tag) > 50:
-                raise ValueError("Tag length exceeds 50 characters")
-
-            if not re.match(r"^[a-z0-9 ]+$", tag):
-                raise ValueError("Tags must be alphanumeric and may contain spaces")
-
-            if tag not in seen:
-                cleaned.append(tag)
-                seen.add(tag)
-
-        return cleaned
+    def normalize_tags_validator(cls, tags):
+        return normalize_tags(tags)
 
 class PromptCreate(PromptBase):
     """Model for creating a new prompt based on PromptBase attributes.

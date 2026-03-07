@@ -11,7 +11,13 @@ from app.models import (
     get_current_time
 )
 from app.storage import storage
-from app.utils import sort_prompts_by_date, filter_prompts_by_collection, search_prompts, filter_prompts_by_tags
+from app.utils import (
+    sort_prompts_by_date,
+    filter_prompts_by_collection,
+    search_prompts,
+    filter_prompts_by_tags,
+    parse_tags_query
+)
 from app import __version__
 
 
@@ -84,7 +90,7 @@ def list_prompts(
 
     # Filter by tags
     if tags:
-        tag_list = [t.strip().lower() for t in tags.split(",") if t.strip()]
+        tag_list = parse_tags_query(tags)
         prompts = filter_prompts_by_tags(prompts, tag_list)
 
     # Sort by date (newest first)
@@ -138,7 +144,7 @@ def create_prompt(prompt_data: PromptCreate):
     Example:
         To create a new prompt with collection ID "col-123":
         curl -X POST "http://localhost:8000/prompts" -H "Content-Type: application/json" \
-        -d '{"name": "Greeting", "content": "Hello, world", "collection_id": "col-123"}'
+        -d '{"title": "Greeting", "content": "Hello, world", "collection_id": "col-123"}'
     """
     # Validate collection exists if provided
     if prompt_data.collection_id:
