@@ -51,6 +51,7 @@ class PromptBase(BaseModel):
     content: str = Field(..., min_length=1)
     description: Optional[str] = Field(None, max_length=500)
     collection_id: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
 
 class PromptCreate(PromptBase):
     """Model for creating a new prompt based on PromptBase attributes.
