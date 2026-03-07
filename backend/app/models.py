@@ -2,7 +2,8 @@
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+import re
 from uuid import uuid4
 
 def generate_id() -> str:
@@ -53,6 +54,30 @@ class PromptBase(BaseModel):
     collection_id: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
 
+    @field_validator("tags", mode="before")
+    @classmethod
+    def normalize_tags(cls, tags):
+        if tags is None:
+            return []
+
+        cleaned = []
+        seen = set()
+
+        for tag in tags:
+            tag = tag.strip().lower()
+
+            if len(tag) > 50:
+                raise ValueError("Tag length exceeds 50 characters")
+
+            if not re.match(r"^[a-z0-9 ]+$", tag):
+                raise ValueError("Tags must be alphanumeric and may contain spaces")
+
+            if tag not in seen:
+                cleaned.append(tag)
+                seen.add(tag)
+
+        return cleaned
+
 class PromptCreate(PromptBase):
     """Model for creating a new prompt based on PromptBase attributes.
 
@@ -66,18 +91,14 @@ class PromptCreate(PromptBase):
     """
     pass
 
-class PromptUpdate(PromptBase):
-    """Model for updating an existing prompt, inheriting PromptBase attributes.
+class PromptUpdate(BaseModel):
+    """Model for partially updating a prompt."""
 
-    Inherits all attributes from PromptBase.
-
-    Example:
-        >>> prompt_update = PromptUpdate(
-        ...     title="Updated Prompt",
-        ...     content="Updated content."
-        ... )
-    """
-    pass
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    content: Optional[str] = Field(None, min_length=1)
+    description: Optional[str] = Field(None, max_length=500)
+    collection_id: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 class Prompt(PromptBase):
     """Model representing a complete prompt with metadata attributes.

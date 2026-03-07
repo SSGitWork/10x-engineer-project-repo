@@ -11,7 +11,7 @@ from app.models import (
     get_current_time
 )
 from app.storage import storage
-from app.utils import sort_prompts_by_date, filter_prompts_by_collection, search_prompts
+from app.utils import sort_prompts_by_date, filter_prompts_by_collection, search_prompts, filter_prompts_by_tags
 from app import __version__
 
 
@@ -50,7 +50,8 @@ def health_check():
 @app.get("/prompts", response_model=PromptList)
 def list_prompts(
     collection_id: Optional[str] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    tags: Optional[str] = None
 ):
     """List available prompts with optional filtering and searching.
 
@@ -77,10 +78,15 @@ def list_prompts(
     if collection_id:
         prompts = filter_prompts_by_collection(prompts, collection_id)
     
-    # Search if query provided
+        # Search if query provided
     if search:
         prompts = search_prompts(prompts, search)
-    
+
+    # Filter by tags
+    if tags:
+        tag_list = [t.strip().lower() for t in tags.split(",") if t.strip()]
+        prompts = filter_prompts_by_tags(prompts, tag_list)
+
     # Sort by date (newest first)
     prompts = sort_prompts_by_date(prompts, descending=True)
     
@@ -227,6 +233,7 @@ def patch_prompt(prompt_id: str, prompt_data: PromptUpdate):
         content=prompt_data.content if prompt_data.content is not None else existing.content,
         description=prompt_data.description if prompt_data.description is not None else existing.description,
         collection_id=prompt_data.collection_id if prompt_data.collection_id is not None else existing.collection_id,
+        tags=prompt_data.tags if prompt_data.tags is not None else existing.tags,
         created_at=existing.created_at,
         updated_at=get_current_time()
     )

@@ -65,6 +65,24 @@ def search_prompts(prompts: List[Prompt], query: str) -> List[Prompt]:
            (p.description and query_lower in p.description.lower())
     ]
 
+def filter_prompts_by_tags(prompts: List[Prompt], tags: List[str]) -> List[Prompt]:
+    """Filter prompts that match ANY of the provided tags.
+
+    Args:
+        prompts (List[Prompt]): The list of prompts.
+        tags (List[str]): Tags to filter by.
+
+    Returns:
+        List[Prompt]: Prompts containing any of the provided tags.
+    """
+    tag_set = set(tags)
+
+    return [
+        p for p in prompts
+        if p.tags and tag_set.intersection(set(p.tags))
+    ]
+
+
 def validate_prompt_content(content: str) -> bool:
     """Check if prompt content is valid.
 
