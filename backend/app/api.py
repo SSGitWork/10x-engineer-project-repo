@@ -1,6 +1,6 @@
 """FastAPI routes for PromptLab"""
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 
@@ -12,10 +12,7 @@ from app.models import (
 )
 from app.storage import storage
 from app.utils import (
-    sort_prompts_by_date,
-    filter_prompts_by_collection,
-    search_prompts,
-    filter_prompts_by_tags,
+    query_prompts,
     parse_tags_query
 )
 from app import __version__
@@ -79,23 +76,16 @@ def list_prompts(
         curl -X GET "http://localhost:8000/prompts?search=Hello"
     """
     prompts = storage.get_all_prompts()
-    
-    # Filter by collection if specified
-    if collection_id:
-        prompts = filter_prompts_by_collection(prompts, collection_id)
-    
-        # Search if query provided
-    if search:
-        prompts = search_prompts(prompts, search)
 
-    # Filter by tags
-    if tags:
-        tag_list = parse_tags_query(tags)
-        prompts = filter_prompts_by_tags(prompts, tag_list)
+    tag_list = parse_tags_query(tags) if tags else None
 
-    # Sort by date (newest first)
-    prompts = sort_prompts_by_date(prompts, descending=True)
-    
+    prompts = query_prompts(
+        prompts=prompts,
+        collection_id=collection_id,
+        search=search,
+        tags=tag_list
+    )
+
     return PromptList(prompts=prompts, total=len(prompts))
 
 
@@ -124,7 +114,7 @@ def get_prompt(prompt_id: str):
     return prompt
 
 
-@app.post("/prompts", response_model=Prompt, status_code=201)
+@app.post("/prompts", response_model=Prompt, status_code=status.HTTP_201_CREATED)
 def create_prompt(prompt_data: PromptCreate):
     """Create a new prompt in the specified collection.
 
@@ -147,10 +137,8 @@ def create_prompt(prompt_data: PromptCreate):
         -d '{"title": "Greeting", "content": "Hello, world", "collection_id": "col-123"}'
     """
     # Validate collection exists if provided
-    if prompt_data.collection_id:
-        collection = storage.get_collection(prompt_data.collection_id)
-        if not collection:
-            raise HTTPException(status_code=400, detail="Collection not found")
+    if prompt_data.collection_id and not storage.collection_exists(prompt_data.collection_id):
+        raise HTTPException(status_code=404, detail="Collection not found")
     
     prompt = Prompt(**prompt_data.model_dump())
     return storage.create_prompt(prompt)
@@ -183,10 +171,8 @@ def update_prompt(prompt_id: str, prompt_data: PromptUpdate):
         raise HTTPException(status_code=404, detail="Prompt not found")
     
     # Validate collection if provided
-    if prompt_data.collection_id:
-        collection = storage.get_collection(prompt_data.collection_id)
-        if not collection:
-            raise HTTPException(status_code=400, detail="Collection not found")
+    if prompt_data.collection_id and not storage.collection_exists(prompt_data.collection_id):
+        raise HTTPException(status_code=404, detail="Collection not found")
     
     updated_prompt = Prompt(
         id=existing.id,
@@ -194,6 +180,7 @@ def update_prompt(prompt_id: str, prompt_data: PromptUpdate):
         content=prompt_data.content,
         description=prompt_data.description,
         collection_id=prompt_data.collection_id,
+        tags=prompt_data.tags or [],
         created_at=existing.created_at,
         updated_at=get_current_time()
     )
@@ -232,22 +219,15 @@ def patch_prompt(prompt_id: str, prompt_data: PromptUpdate):
         if not collection:
             raise HTTPException(status_code=400, detail="Collection not found")
 
-    # Partially update fields if provided
-    updated_prompt = Prompt(
-        id=existing.id,
-        title=prompt_data.title if prompt_data.title is not None else existing.title,
-        content=prompt_data.content if prompt_data.content is not None else existing.content,
-        description=prompt_data.description if prompt_data.description is not None else existing.description,
-        collection_id=prompt_data.collection_id if prompt_data.collection_id is not None else existing.collection_id,
-        tags=prompt_data.tags if prompt_data.tags is not None else existing.tags,
-        created_at=existing.created_at,
-        updated_at=get_current_time()
-    )
+    update_data = prompt_data.model_dump(exclude_unset=True)
+
+    updated_prompt = existing.model_copy(update=update_data)
+    updated_prompt.updated_at = get_current_time()
 
     return storage.update_prompt(prompt_id, updated_prompt)
 
 
-@app.delete("/prompts/{prompt_id}", status_code=204)
+@app.delete("/prompts/{prompt_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_prompt(prompt_id: str):
     """Delete a prompt by its ID.
 
@@ -316,7 +296,7 @@ def get_collection(collection_id: str):
     return collection
 
 
-@app.post("/collections", response_model=Collection, status_code=201)
+@app.post("/collections", response_model=Collection, status_code=status.HTTP_201_CREATED)
 def create_collection(collection_data: CollectionCreate):
     """Create a new collection.
 
@@ -338,7 +318,7 @@ def create_collection(collection_data: CollectionCreate):
     return storage.create_collection(collection)
 
 
-@app.delete("/collections/{collection_id}", status_code=204)
+@app.delete("/collections/{collection_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_collection(collection_id: str):
     """Delete a collection and its associated prompts by collection ID.
 
@@ -358,18 +338,7 @@ def delete_collection(collection_id: str):
         To delete a collection with ID "col-123":
         curl -X DELETE "http://localhost:8000/collections/col-123"
     """
-    # First, fetch the collection to check its existence and get associated prompts
-    collection = storage.get_collection(collection_id)
-    if not collection:
+    if not storage.delete_collection_with_prompts(collection_id):
         raise HTTPException(status_code=404, detail="Collection not found")
-    
-    # Retrieve all prompts with the collection_id to handle them
-    prompts = storage.get_prompts_by_collection(collection_id)
 
-    # Delete or handle the associated prompts as needed
-    for prompt in prompts:
-        storage.delete_prompt(prompt.id)
-
-    # Now, delete the collection itself
-    storage.delete_collection(collection_id)
     return None

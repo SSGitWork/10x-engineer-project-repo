@@ -43,7 +43,7 @@ class TestPrompts:
 
         response = client.post("/prompts", json=payload)
 
-        assert response.status_code == 400
+        assert response.status_code == 404
         assert response.json()["detail"] == "Collection not found"
 
     def test_list_prompts_empty(self, client: TestClient):
@@ -412,5 +412,5 @@ class TestCollectionIntegrity:
             },
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 404
         assert response.json()["detail"] == "Collection not found"

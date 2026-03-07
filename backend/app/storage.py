@@ -139,6 +139,17 @@ class Storage:
         """
         return self._collections.get(collection_id)
 
+    def collection_exists(self, collection_id: str) -> bool:
+        """Check if a collection exists in storage.
+
+        Args:
+            collection_id (str): The ID of the collection.
+
+        Returns:
+            bool: True if the collection exists, otherwise False.
+        """
+        return collection_id in self._collections
+
     def get_all_collections(self) -> List[Collection]:
         """Get all stored collections.
 
@@ -183,6 +194,26 @@ class Storage:
             prompts = storage.get_prompts_by_collection("col1")
         """
         return [p for p in self._prompts.values() if p.collection_id == collection_id]
+
+    def delete_collection_with_prompts(self, collection_id: str) -> bool:
+        """Delete a collection and all prompts associated with it.
+
+        Args:
+            collection_id (str): The ID of the collection to delete.
+
+        Returns:
+            bool: True if the collection existed and was deleted, otherwise False.
+        """
+        if collection_id not in self._collections:
+            return False
+
+        prompts_to_delete = [p.id for p in self._prompts.values() if p.collection_id == collection_id]
+
+        for prompt_id in prompts_to_delete:
+            del self._prompts[prompt_id]
+
+        del self._collections[collection_id]
+        return True
 
     # ============== Utility ==============
 

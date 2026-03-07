@@ -1,7 +1,7 @@
 """Unit tests for utility functions in utils.py."""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from types import SimpleNamespace
 
 from app.utils import (
@@ -13,7 +13,10 @@ from app.utils import (
     filter_prompts_by_tags,
     validate_prompt_content,
     extract_variables,
+    query_prompts,
 )
+from app.storage import Storage
+from app.models import Collection, Prompt
 
 
 def make_prompt(**kwargs):
@@ -24,7 +27,7 @@ def make_prompt(**kwargs):
         "description": None,
         "collection_id": None,
         "tags": [],
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
     }
     defaults.update(kwargs)
     return SimpleNamespace(**defaults)
@@ -32,7 +35,7 @@ def make_prompt(**kwargs):
 
 class TestSortPrompts:
     def test_sort_prompts_descending(self):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         p1 = make_prompt(title="Old", created_at=now - timedelta(days=1))
         p2 = make_prompt(title="New", created_at=now)
@@ -43,7 +46,7 @@ class TestSortPrompts:
         assert result[1].title == "Old"
 
     def test_sort_prompts_ascending(self):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         p1 = make_prompt(title="Old", created_at=now - timedelta(days=1))
         p2 = make_prompt(title="New", created_at=now)
@@ -224,3 +227,58 @@ class TestExtractVariables:
         result = extract_variables("{{name}} and {{name}}")
 
         assert result == ["name", "name"]
+
+
+class TestQueryPrompts:
+    def test_query_prompts_search_filter(self):
+        p1 = make_prompt(title="AI Prompt", tags=["ai"])
+        p2 = make_prompt(title="Cooking Prompt", tags=["food"])
+
+        results = query_prompts([p1, p2], search="AI")
+
+        assert len(results) == 1
+        assert results[0].title == "AI Prompt"
+
+    def test_query_prompts_sorting(self):
+        now = datetime.now(UTC)
+
+        p1 = make_prompt(title="First", created_at=now - timedelta(seconds=1))
+        p2 = make_prompt(title="Second", created_at=now)
+
+        results = query_prompts([p1, p2])
+
+        assert results[0].title == "Second"
+        assert results[1].title == "First"
+
+
+class TestStorageHelpers:
+    def test_collection_exists_true(self):
+        storage = Storage()
+
+        col = storage.create_collection(Collection(name="Test Collection"))
+
+        assert storage.collection_exists(col.id) is True
+
+    def test_collection_exists_false(self):
+        storage = Storage()
+
+        assert storage.collection_exists("missing-id") is False
+
+    def test_delete_collection_with_prompts(self):
+        storage = Storage()
+
+        col = storage.create_collection(Collection(name="Test Collection"))
+
+        prompt = Prompt(
+            title="Linked Prompt",
+            content="Content",
+            collection_id=col.id
+        )
+
+        storage.create_prompt(prompt)
+
+        result = storage.delete_collection_with_prompts(col.id)
+
+        assert result is True
+        assert storage.get_collection(col.id) is None
+        assert storage.get_prompt(prompt.id) is None

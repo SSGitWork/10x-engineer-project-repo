@@ -1,12 +1,9 @@
 """Utility functions for PromptLab"""
-from typing import List
+from typing import List, Optional, TYPE_CHECKING
 import re
 
-# !NOTE: Prompt is done to avoid circular dependency
-# models -> utils
-# utils -> models
-class Prompt:
-    ...
+if TYPE_CHECKING:
+    from app.models import Prompt
 
 def sort_prompts_by_date(prompts: List[Prompt], descending: bool = True) -> List[Prompt]:
     """Sort prompts by their creation date.
@@ -123,6 +120,37 @@ def filter_prompts_by_tags(prompts: List[Prompt], tags: List[str]) -> List[Promp
     ]
 
 
+def query_prompts(
+    prompts: List[Prompt],
+    collection_id: Optional[str] = None,
+    search: Optional[str] = None,
+    tags: Optional[List[str]] = None
+) -> List[Prompt]:
+    """Apply filtering, searching, and sorting to a list of prompts.
+
+    Args:
+        prompts (List[Prompt]): Base list of prompts.
+        collection_id (Optional[str]): Collection filter.
+        search (Optional[str]): Search query.
+        tags (Optional[List[str]]): Tags to filter by.
+
+    Returns:
+        List[Prompt]: Processed list of prompts.
+    """
+    results = prompts
+
+    if collection_id:
+        results = filter_prompts_by_collection(results, collection_id)
+
+    if search:
+        results = search_prompts(results, search)
+
+    if tags:
+        results = filter_prompts_by_tags(results, tags)
+
+    return sort_prompts_by_date(results, descending=True)
+
+
 def validate_prompt_content(content: str) -> bool:
     """Check if prompt content is valid.
 
@@ -162,6 +190,5 @@ def extract_variables(content: str) -> List[str]:
         >>> extract_variables("Hello {{name}}, welcome to {{place}}!")
         ['name', 'place']
     """
-    import re
     pattern = r'\{\{(\w+)\}\}'
     return re.findall(pattern, content)
