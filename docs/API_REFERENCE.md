@@ -6,7 +6,7 @@ This document provides a comprehensive overview of all the API endpoints availab
 
 ## Error Codes and Formats
 
-Error codes in the PromptLab API follow standard HTTP status codes. 
+Error codes in the PromptLab API follow standard HTTP status codes.
 
 ### Error Response Format
 When an error occurs, the API returns JSON responses with the following structure:
@@ -18,9 +18,9 @@ When an error occurs, the API returns JSON responses with the following structur
 ```
 
 ### Common Error Codes
-- **400**: Bad Request – Malformed payload or invalid input.
+- **400**: Bad Request – Malformed payload, invalid input, or business rule violations (e.g., invalid collection references).
 - **404**: Not Found – Requested resource not found (e.g., Prompt or Collection not available).
-- **422**: Unprocessable Entity – Validation errors (handled by FastAPI automatically).
+- **422**: Unprocessable Entity – Validation errors (handled automatically by FastAPI and Pydantic).
 - **500**: Internal Server Error – Unexpected server-side failure.
 
 ---
@@ -28,7 +28,7 @@ When an error occurs, the API returns JSON responses with the following structur
 ## Health Check
 
 ### GET `/health`
-- **Description**: Check the health status of the PromptLab API.
+- **Description**: Check the health status and current version of the PromptLab API.
 - **Parameters**: None
 - **Request Body**: None
 - **Response**:
@@ -49,10 +49,11 @@ curl -X GET "http://localhost:8000/health"
 ## Prompt Endpoints
 
 ### GET `/prompts`
-- **Description**: List available prompts with optional filtering and searching.
+- **Description**: List available prompts with optional filtering by collection, search keywords, or tags.
 - **Parameters**:
   - `collection_id` (Optional, query): The ID of the collection to filter prompts by.
-  - `search` (Optional, query): A keyword to search for within prompt titles and contents.
+  - `search` (Optional, query): A keyword to search within prompt titles and contents.
+  - `tags` (Optional, query): Comma-separated list of tags to filter prompts by.
 - **Request Body**: None
 - **Response**:
   ```json
@@ -64,6 +65,7 @@ curl -X GET "http://localhost:8000/health"
         "content": "Example Content",
         "description": "Optional description",
         "collection_id": "col-123",
+        "tags": ["tag1", "tag2"],
         "created_at": "2023-11-01T12:00:00Z",
         "updated_at": "2023-11-01T12:00:00Z"
       }
@@ -83,8 +85,13 @@ curl -X GET "http://localhost:8000/health"
   ```
 - Search prompts by keyword:
   ```bash
-  curl -X GET "http://localhost:8000/prompts?search=Hello"
+  curl -X GET "http://localhost:8000/prompts?search=hello"
   ```
+- Filter prompts by tags:
+  ```bash
+  curl -X GET "http://localhost:8000/prompts?tags=tag1,tag2"
+  ```
+
 ---
 
 ### GET `/prompts/{prompt_id}`
@@ -100,6 +107,7 @@ curl -X GET "http://localhost:8000/health"
     "content": "Example Content",
     "description": "Optional description",
     "collection_id": "col-123",
+    "tags": ["tag1", "tag2"],
     "created_at": "2023-11-01T12:00:00Z",
     "updated_at": "2023-11-01T12:00:00Z"
   }
@@ -121,7 +129,8 @@ curl -X GET "http://localhost:8000/prompts/prompt-123"
     "title": "Example Title",
     "content": "Example Content",
     "description": "Optional description",
-    "collection_id": "col-123"
+    "collection_id": "col-123",
+    "tags": ["example_tag"]
   }
   ```
 - **Response**:
@@ -132,6 +141,7 @@ curl -X GET "http://localhost:8000/prompts/prompt-123"
     "content": "Example Content",
     "description": "Optional description",
     "collection_id": "col-123",
+    "tags": ["example_tag"],
     "created_at": "2023-11-01T12:00:00Z",
     "updated_at": "2023-11-01T12:00:00Z"
   }
@@ -140,13 +150,13 @@ curl -X GET "http://localhost:8000/prompts/prompt-123"
 #### Example Request:
 ```bash
 curl -X POST "http://localhost:8000/prompts" -H "Content-Type: application/json" \
--d '{"title": "Example Title", "content": "Example Content", "collection_id": "col-123"}'
+-d '{"title": "Example Title", "content": "Example Content", "collection_id": "col-123", "tags": ["example_tag"]}'
 ```
 
 ---
 
 ### PUT `/prompts/{prompt_id}`
-- **Description**: Update a prompt with all fields.
+- **Description**: Update all fields of an existing prompt by its ID.
 - **Parameters**:
   - `prompt_id` (Required, path): The unique identifier of the prompt to update.
 - **Request Body**:
@@ -155,7 +165,8 @@ curl -X POST "http://localhost:8000/prompts" -H "Content-Type: application/json"
     "title": "Updated Title",
     "content": "Updated Content",
     "description": "Updated Description",
-    "collection_id": "col-123"
+    "collection_id": "col-123",
+    "tags": ["updated_tag1", "updated_tag2"]
   }
   ```
 - **Response**:
@@ -166,6 +177,7 @@ curl -X POST "http://localhost:8000/prompts" -H "Content-Type: application/json"
     "content": "Updated Content",
     "description": "Updated Description",
     "collection_id": "col-123",
+    "tags": ["updated_tag1", "updated_tag2"],
     "created_at": "2023-11-01T12:00:00Z",
     "updated_at": "2023-11-01T12:10:00Z"
   }
@@ -174,19 +186,20 @@ curl -X POST "http://localhost:8000/prompts" -H "Content-Type: application/json"
 #### Example Request:
 ```bash
 curl -X PUT "http://localhost:8000/prompts/prompt-123" -H "Content-Type: application/json" \
--d '{"title": "Updated Title", "content": "Updated Content"}'
+-d '{"title": "Updated Title", "content": "Updated Content", "tags": ["updated_tag1"]}'
 ```
 
 ---
 
 ### PATCH `/prompts/{prompt_id}`
-- **Description**: Partially update specific fields of an existing prompt.
+- **Description**: Partially update specific fields of an existing prompt by ID.
 - **Parameters**:
   - `prompt_id` (Required, path): The unique identifier of the prompt to patch.
 - **Request Body**:
   ```json
   {
-    "content": "Updated Content"
+    "content": "Partially Updated Content",
+    "tags": ["new_tag"]
   }
   ```
 - **Response**:
@@ -194,9 +207,10 @@ curl -X PUT "http://localhost:8000/prompts/prompt-123" -H "Content-Type: applica
   {
     "id": "prompt-123",
     "title": "Example Title",
-    "content": "Updated Content",
+    "content": "Partially Updated Content",
     "description": "Optional description",
     "collection_id": "col-123",
+    "tags": ["new_tag"],
     "created_at": "2023-11-01T12:00:00Z",
     "updated_at": "2023-11-01T12:10:00Z"
   }
@@ -205,7 +219,7 @@ curl -X PUT "http://localhost:8000/prompts/prompt-123" -H "Content-Type: applica
 #### Example Request:
 ```bash
 curl -X PATCH "http://localhost:8000/prompts/prompt-123" -H "Content-Type: application/json" \
--d '{"content": "Updated Content"}'
+-d '{"tags": ["new_tag"]}'
 ```
 
 ---
@@ -227,7 +241,7 @@ curl -X DELETE "http://localhost:8000/prompts/prompt-123"
 ## Collection Endpoints
 
 ### GET `/collections`
-- **Description**: List all available collections.
+- **Description**: List all collections stored in the system.
 - **Parameters**: None
 - **Request Body**: None
 - **Response**:
@@ -306,7 +320,7 @@ curl -X POST "http://localhost:8000/collections" -H "Content-Type: application/j
 ---
 
 ### DELETE `/collections/{collection_id}`
-- **Description**: Delete a collection and its associated prompts by collection ID.
+- **Description**: Delete a collection by its ID along with its associated prompts.
 - **Parameters**:
   - `collection_id` (Required, path): The unique identifier of the collection to delete.
 - **Request Body**: None
@@ -315,4 +329,3 @@ curl -X POST "http://localhost:8000/collections" -H "Content-Type: application/j
 #### Example Request:
 ```bash
 curl -X DELETE "http://localhost:8000/collections/col-123"
-```

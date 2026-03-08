@@ -1,131 +1,500 @@
 # PromptLab
 
-PromptLab is a tool for storing, organizing, and testing AI prompts in collections.
+PromptLab is a developer-focused tool for storing, organizing, tagging, and testing AI prompts in structured collections.
 
-## Table of Contents
+It provides a lightweight REST API built with **FastAPI** that allows AI engineers to manage prompt libraries, experiment with prompt variations, and collaborate efficiently.
+
+---
+
+# Table of Contents
+
 - [Project Overview](#project-overview)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Installation Guide](#installation-guide)
+- [Running the Application](#running-the-application)
+- [Docker Usage](#docker-usage)
 - [API Summary](#api-summary)
 - [Usage Examples](#usage-examples)
 - [Testing](#testing)
-- [Contribution](#contribution)
+- [CI Integration](#ci-integration)
+- [Contribution Guide](#contribution-guide)
 - [License](#license)
 
-## Project Overview
+---
 
-PromptLab is developed with the aim to streamline the process of managing AI prompts. It supports creating, organizing, and testing prompts, making it easier for AI engineers to collaborate and iterate on prompt designs efficiently.
+# Project Overview
 
-## Architecture
+PromptLab is designed to simplify prompt management workflows for AI development.
+
+It enables teams to:
+
+- Store prompts in reusable collections
+- Organize prompts using tags
+- Update and maintain prompt versions easily
+- Access prompts through a REST API
+- Collaborate on prompt engineering workflows
+
+The project currently uses **in-memory storage** but is designed to support future database integrations.
+
+---
+
+# Architecture
+
+PromptLab follows a modular backend structure separating API routes, models, storage logic, and utilities.
 
 ```
 PromptLab/
 ├── backend/
 │   ├── app/
-│   │   ├── api.py        # FastAPI routes
-│   │   ├── models.py     # Pydantic models/schemas
-│   │   ├── storage.py    # In-memory storage (future DB placeholder)
-│   │   ├── utils.py      # Shared helpers and utilities
-└── tests/
-    ├── test_api_prompts.py  # Tests for prompt API operations
+│   │   ├── api.py           # FastAPI route definitions
+│   │   ├── models.py        # Pydantic models/schemas
+│   │   ├── storage.py       # In-memory storage and business logic
+│   │   ├── utils.py         # Shared helpers and utilities
+│   │   └── main.py          # FastAPI application entry point
+│   │
+│   ├── tests/
+│   │   ├── test_api_prompts.py
+│   │   ├── test_api_collections.py
+│   │   └── test_tagging.py
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml           # GitHub Actions CI pipeline
+│
+├── Dockerfile               # Docker container configuration
+├── docker-compose.yml       # Local container orchestration
+├── requirements.txt
+└── README.md
 ```
 
-## Prerequisites
+### Core Components
 
-- Python 3.11+
+**api.py**
+
+Defines FastAPI routes for managing prompts, collections, and tags.
+
+**models.py**
+
+Contains Pydantic models used for request validation and response schemas.
+
+**storage.py**
+
+Implements in-memory storage logic for prompts, collections, and tags.
+
+**utils.py**
+
+Contains helper utilities such as ID generation, timestamps, and shared helper logic.
+
+---
+
+# Prerequisites
+
+Before running PromptLab ensure the following tools are installed:
+
+- Python **3.11+**
 - pip (Python package installer)
-- Git 2.40+
+- Git **2.40+**
+- Docker (optional, for containerized execution)
 
-## Installation Guide
+---
 
-1. **Clone the repository:**
-   ```shell
-   git clone <repository-url>
-   ```
+# Installation Guide
 
-2. **Navigate to the project directory:**
-   ```shell
-   cd backend
-   ```
+### 1. Clone the Repository
 
-3. **Create a virtual environment:**
-   ```shell
-   python -m venv venv
-   ```
+```shell
+git clone <repository-url>
+cd PromptLab
+```
 
-4. **Activate the virtual environment:**
-   - On Windows:
-     ```shell
-     venv\Scripts\activate
-     ```
-   - On macOS/Linux:
-     ```shell
-     source venv/bin/activate
-     ```
+### 2. Navigate to Backend
 
-5. **Install the dependencies:**
-   ```shell
-   pip install -r requirements.txt
-   ```
+```shell
+cd backend
+```
 
-## API Summary
+### 3. Create a Virtual Environment
 
-PromptLab features a RESTful API, powered by FastAPI, offering the following endpoints:
+```shell
+python -m venv venv
+```
 
-- **Prompts:**
-  - `GET /prompts`: List all prompts
-  - `POST /prompts`: Create a new prompt
-  - `GET /prompts/{prompt_id}`: Retrieve a specific prompt
-  - `PUT /prompts/{prompt_id}`: Update a specific prompt
-  - `DELETE /prompts/{prompt_id}`: Delete a specific prompt
+### 4. Activate the Virtual Environment
 
-- **Collections:**
-  - `GET /collections`: List all collections
-  - `POST /collections`: Create a new collection
-  - `GET /collections/{collection_id}`: Retrieve a specific collection
-  - `PUT /collections/{collection_id}`: Update a specific collection
-  - `DELETE /collections/{collection_id}`: Delete a specific collection
+Windows
 
-## Usage Examples
+```shell
+venv\Scripts\activate
+```
 
-### Starting the Application
+macOS / Linux
 
-To start the FastAPI application, run the following command:
+```shell
+source venv/bin/activate
+```
+
+### 5. Install Dependencies
+
+```shell
+pip install -r requirements.txt
+```
+
+---
+
+# Running the Application
+
+Start the FastAPI development server.
 
 ```shell
 cd backend
 uvicorn main:app --reload
 ```
 
-The application will be available at `http://127.0.0.1:8000`.
+The application will be available at:
 
-### Sample Request
+```
+http://127.0.0.1:8000
+```
 
-To create a new prompt:
+Interactive API documentation:
+
+```
+http://127.0.0.1:8000/docs
+```
+
+Alternative OpenAPI documentation:
+
+```
+http://127.0.0.1:8000/redoc
+```
+
+---
+
+# Docker Usage
+
+PromptLab can also be run using Docker for easier local deployment and testing.
+
+## Build the Docker Image
+
+From the project root directory:
+
+```shell
+docker build -t promptlab .
+```
+
+## Run the Docker Container
+
+```shell
+docker run -p 8000:8000 promptlab
+```
+
+The application will be accessible at:
+
+```
+http://localhost:8000
+```
+
+---
+
+## Using Docker Compose
+
+Docker Compose simplifies local deployment.
+
+Start the application:
+
+```shell
+docker-compose up --build
+```
+
+Stop the application:
+
+```shell
+docker-compose down
+```
+
+This will:
+
+- Build the container image
+- Start the PromptLab backend service
+- Expose the API on port **8000**
+
+---
+
+# API Summary
+
+PromptLab exposes RESTful endpoints for managing **prompts**, **collections**, and system health checks.
+
+For complete request/response examples and detailed documentation, see:
+
+```
+docs/API_REFERENCE.md
+```
+
+---
+
+## Health
+
+- `GET /health`  
+  Returns the health status and current API version.
+
+---
+
+## Prompts
+
+- `GET /prompts`  
+  List prompts with optional filtering.
+
+  Optional query parameters:
+  - `collection_id` — Filter prompts by collection
+  - `search` — Search prompts by title or content
+  - `tags` — Comma-separated list of tags
+
+- `GET /prompts/{prompt_id}`  
+  Retrieve a specific prompt by ID.
+
+- `POST /prompts`  
+  Create a new prompt.
+
+- `PUT /prompts/{prompt_id}`  
+  Replace all fields of an existing prompt.
+
+- `PATCH /prompts/{prompt_id}`  
+  Partially update fields of an existing prompt.
+
+- `DELETE /prompts/{prompt_id}`  
+  Delete a prompt by ID.
+
+---
+
+## Collections
+
+- `GET /collections`  
+  List all collections.
+
+- `GET /collections/{collection_id}`  
+  Retrieve a specific collection.
+
+- `POST /collections`  
+  Create a new collection.
+
+- `DELETE /collections/{collection_id}`  
+  Delete a collection and its associated prompts.
+
+---
+
+## Error Responses
+
+Errors follow a consistent JSON structure.
+
+Example:
 
 ```json
-POST /prompts
 {
-  "name": "SamplePrompt",
-  "content": "This is a sample prompt with variable {{input}}",
-  "collection_id": "col-123"
+  "detail": "Prompt not found"
 }
 ```
 
-### Testing
+Common status codes:
 
-Run the test suite with pytest:
+- **400** – Invalid input or business rule violation
+- **404** – Resource not found
+- **422** – Validation error
+- **500** – Unexpected server error
+
+---
+
+# Usage Examples
+
+## Create a Collection
+
+Request:
+
+```
+POST /collections
+```
+
+Body:
+
+```json
+{
+  "name": "Customer Support Prompts",
+  "description": "Prompts used for customer support workflows"
+}
+```
+
+---
+
+## Create a Prompt
+
+Request:
+
+```
+POST /prompts
+```
+
+Body:
+
+```json
+{
+  "name": "Greeting Prompt",
+  "content": "Hello {{customer_name}}, how can I help you today?",
+  "collection_id": "col-123",
+  "tags": ["greeting", "support"]
+}
+```
+
+---
+
+## Retrieve a Prompt
+
+```
+GET /prompts/{prompt_id}
+```
+
+Example:
+
+```
+GET /prompts/prm-abc123
+```
+
+---
+
+## List All Prompts
+
+```
+GET /prompts
+```
+
+---
+
+## Delete a Prompt
+
+```
+DELETE /prompts/{prompt_id}
+```
+
+---
+
+# Testing
+
+PromptLab uses **pytest** for automated testing.
+
+Run the test suite:
 
 ```shell
 cd backend
 pytest tests/ -v
 ```
 
-## Contribution
+Tests cover:
 
-If you're interested in contributing to PromptLab, please open an issue or submit a pull request.
+- API endpoint behavior
+- Input validation
+- Error handling
+- Tagging functionality
+- Storage logic
 
-## License
+---
+
+# CI Integration
+
+PromptLab includes a **GitHub Actions CI pipeline** to ensure code quality and reliability.
+
+The CI workflow automatically runs on pushes and pull requests.
+
+The pipeline performs:
+
+- Python environment setup
+- Dependency installation
+- Static checks (if configured)
+- Test execution using pytest
+
+CI configuration is located in:
+
+```
+.github/workflows/ci.yml
+```
+
+---
+
+# Contribution Guide
+
+Contributions are welcome and encouraged.
+
+## Contribution Workflow
+
+### 1. Fork the Repository
+
+Click **Fork** on GitHub to create your own copy of the repository.
+
+### 2. Clone Your Fork
+
+```shell
+git clone https://github.com/<your-username>/PromptLab.git
+```
+
+### 3. Create a Feature Branch
+
+```shell
+git checkout -b feature/<feature-name>
+```
+
+### 4. Implement Your Changes
+
+Follow project coding standards:
+
+- Follow **PEP8**
+- Use **type hints**
+- Write **Google-style docstrings**
+- Keep API routes thin and place business logic in storage/helpers
+- Add or update tests for new features
+- Update documentation when necessary
+
+### 5. Run Tests Locally
+
+```shell
+pytest tests/ -v
+```
+
+### 6. Commit Your Changes
+
+Use meaningful commit messages.
+
+Examples:
+
+```
+feat: add prompt tagging support
+fix: validate collection existence before prompt creation
+docs: update README with Docker instructions
+```
+
+### 7. Push Your Branch
+
+```shell
+git push origin feature/<feature-name>
+```
+
+### 8. Open a Pull Request
+
+Submit a Pull Request to the main repository.
+
+Your PR should include:
+
+- Clear description of changes
+- Linked issue (if applicable)
+- Updated documentation if required
+- Tests covering new functionality
+
+PRs will be reviewed for:
+
+- Code quality
+- Test coverage
+- Documentation completeness
+- Architectural consistency
+
+---
+
+# License
 
 This project is licensed under the MIT License.
