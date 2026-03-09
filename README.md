@@ -2,7 +2,7 @@
 
 PromptLab is a developer-focused tool for storing, organizing, tagging, and testing AI prompts in structured collections.
 
-It provides a lightweight REST API built with **FastAPI** that allows AI engineers to manage prompt libraries, experiment with prompt variations, and collaborate efficiently.
+It provides a lightweight REST API built with **FastAPI** and a user-friendly frontend built with **React** to allow AI engineers to manage prompt libraries, experiment with prompt variations, and collaborate efficiently.
 
 ---
 
@@ -12,7 +12,8 @@ It provides a lightweight REST API built with **FastAPI** that allows AI enginee
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Installation Guide](#installation-guide)
-- [Running the Application](#running-the-application)
+- [Running the Backend](#running-the-backend)
+- [Running the Frontend](#running-the-frontend)
 - [Docker Usage](#docker-usage)
 - [API Summary](#api-summary)
 - [Usage Examples](#usage-examples)
@@ -32,7 +33,7 @@ It enables teams to:
 - Store prompts in reusable collections
 - Organize prompts using tags
 - Update and maintain prompt versions easily
-- Access prompts through a REST API
+- Access prompts through a REST API and a web frontend
 - Collaborate on prompt engineering workflows
 
 The project currently uses **in-memory storage** but is designed to support future database integrations.
@@ -41,7 +42,7 @@ The project currently uses **in-memory storage** but is designed to support futu
 
 # Architecture
 
-PromptLab follows a modular backend structure separating API routes, models, storage logic, and utilities.
+PromptLab follows a modular architecture separating frontend and backend components.
 
 ```
 PromptLab/
@@ -51,40 +52,51 @@ PromptLab/
 │   │   ├── models.py        # Pydantic models/schemas
 │   │   ├── storage.py       # In-memory storage and business logic
 │   │   ├── utils.py         # Shared helpers and utilities
-│   │   └── main.py          # FastAPI application entry point
+│   │   
 │   │
 │   ├── tests/
 │   │   ├── test_api_prompts.py
 │   │   ├── test_api_collections.py
 │   │   └── test_tagging.py
+|   |
+|   ├── Dockerfile               # Docker container configuration
+|   ├── requirements.txt
+│   └── main.py          # FastAPI application entry point
+|   
+├── frontend/
+│   ├── src/
+│   │   ├── components/      # React components
+│   │   ├── App.tsx          # Main entry point for React
+│   │   └── main.tsx         # ReactDOM render setup
+│   │
+│   ├── public/              # Static files and index.html
+│   └── package.json         # Frontend dependencies and scripts
 │
 ├── .github/
 │   └── workflows/
 │       └── ci.yml           # GitHub Actions CI pipeline
 │
-├── Dockerfile               # Docker container configuration
 ├── docker-compose.yml       # Local container orchestration
-├── requirements.txt
 └── README.md
 ```
 
 ### Core Components
 
-**api.py**
+**backend/app/api.py**
 
 Defines FastAPI routes for managing prompts, collections, and tags.
 
-**models.py**
+**backend/app/models.py**
 
 Contains Pydantic models used for request validation and response schemas.
 
-**storage.py**
+**backend/app/storage.py**
 
 Implements in-memory storage logic for prompts, collections, and tags.
 
-**utils.py**
+**frontend/src/components**
 
-Contains helper utilities such as ID generation, timestamps, and shared helper logic.
+Contains React components for the UI.
 
 ---
 
@@ -93,11 +105,12 @@ Contains helper utilities such as ID generation, timestamps, and shared helper l
 Before running PromptLab ensure the following tools are installed:
 
 - Python **3.11+**
+- Node.js **14.0+** and npm (for frontend development)
 - pip (Python package installer)
 - Git **2.40+**
 - Docker (optional, for containerized execution)
 
----
+--- 
 
 # Installation Guide
 
@@ -140,9 +153,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
----
+--- 
 
-# Running the Application
+# Running the Backend
 
 Start the FastAPI development server.
 
@@ -163,13 +176,30 @@ Interactive API documentation:
 http://127.0.0.1:8000/docs
 ```
 
-Alternative OpenAPI documentation:
+--- 
+
+# Running the Frontend
+
+Navigate to the `frontend` directory and install dependencies:
+
+```shell
+cd frontend
+npm install
+```
+
+Start the React development server:
+
+```shell
+npm start
+```
+
+The frontend application will be accessible at:
 
 ```
-http://127.0.0.1:8000/redoc
+http://localhost:3000
 ```
 
----
+--- 
 
 # Docker Usage
 
@@ -180,22 +210,16 @@ PromptLab can also be run using Docker for easier local deployment and testing.
 From the project root directory:
 
 ```shell
-docker build -t promptlab .
+docker-compose up --build
 ```
 
-## Run the Docker Container
+This will:
 
-```shell
-docker run -p 8000:8000 promptlab
-```
+- Build container images for both the backend and frontend
+- Start PromptLab services
+- Expose the API on port **8000** and frontend on port **3000**
 
-The application will be accessible at:
-
-```
-http://localhost:8000
-```
-
----
+--- 
 
 ## Using Docker Compose
 
